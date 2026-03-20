@@ -1,10 +1,10 @@
 #ifndef _LINESENSORS_H
 #define _LINESENSORS_H
-#define NUM_SENSORS 7
+#define NUM_SENSORS 3
 #define EMIT_PIN 11 // infra-red LEDs PIN
 #define BLACK_THRESHOLD 0.9
 
-const int sensor_pins[ NUM_SENSORS ] = { A11, A0, A2, A3, A4, 4, 5 };
+const int sensor_pins[ NUM_SENSORS ] = { A2, A3, A4 };
 
 class LineSensors_c {
   
@@ -19,12 +19,12 @@ class LineSensors_c {
     }
 
     void initialiseForADC() {
-      pinMode( EMIT_PIN, INPUT );
-      // Configure the line sensor pins
-      // DN1, DN2, DN3, DN4, DN5.
-      for ( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
+        pinMode( EMIT_PIN, INPUT );
+        // Configure the line sensor pins
+        // DN1, DN2, DN3, DN4, DN5.
+        for ( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
         pinMode( sensor_pins[sensor], INPUT_PULLUP );
-      }
+        }
     }
 
     void irOn() {
@@ -37,9 +37,9 @@ class LineSensors_c {
     }
 
     void readSensorsADC() {
-      for( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
+        for( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
         readings[sensor] = analogRead( sensor_pins[sensor] );
-      }
+        }
     }
 
     void calibrationSetup() {
@@ -76,12 +76,10 @@ class LineSensors_c {
     }
 
     void calcCalibratedADC() {
-      readSensorsADC();
-      for( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
+        readSensorsADC();
+        for( int sensor = 0; sensor < NUM_SENSORS; sensor++ ) {
         calibrated[sensor] = (readings[sensor] - minimum[sensor]) / scaling[sensor];
-        if (calibrated[sensor] < 0.0) calibrated[sensor] = 0.0;
-        if (calibrated[sensor] > 1.0) calibrated[sensor] = 1.0;
-      }
+        }
     }
     
     bool isOnBlack(int sensor_index) {

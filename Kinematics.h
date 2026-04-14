@@ -14,9 +14,7 @@ extern volatile long count_e0;
 extern volatile long count_e1;
 
 // Some global definitions concerning
-// the robot dimensions.  You will need
-// to calibrate these to get the best
-// performance. (see Labsheet 4)
+// the robot dimensions. Needs calibration for best performance.
 const float count_per_rev = 358.3;   // From documentation - correct.
 const float wheel_radius  = 17.35;    // mm, could vary - calibrate.
 const float wheel_sep     = 45.00;    // mm, from centre of robot to wheel centre 
@@ -105,8 +103,8 @@ class Kinematics_c {
         while (theta < -PI) theta += 2.0 * PI;
 
         // Done!
-    } // End of update()
+    }
 
-}; // End of Kinematics_c class defintion
+};
 
 #endif

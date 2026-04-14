@@ -5,7 +5,7 @@
 #define EMIT_PIN 11 // infra-red LEDs PIN
 #define BLACK_THRESHOLD 0.9
 
-const int sensor_pins[ NUM_SENSORS ] = { A2, A3, A4 };
+const int sensor_pins[ NUM_SENSORS ] = { A0, A2, A3 };
 const int digital_pins[ NUM_BUMP_SENSORS ] = { 4, 5 };
 
 class LineSensors_c {

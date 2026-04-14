@@ -57,7 +57,7 @@ float avgSensors() {
     for (int i = 0; i < NUM_SENSORS; i++) {
         sum += line_sensors.calibrated[i];
     }
-    return sum / 5.0f;
+    return sum / NUM_SENSORS;
 }
 
 void setup() {

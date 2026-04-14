@@ -52,6 +52,28 @@ auto printSensors = [&]() {
     Serial.println();
 };
 
+auto printSensorsRaw = [&]() {
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        Serial.print("s");
+        Serial.print(i);
+        Serial.print(":");
+        Serial.print(line_sensors.readings[i]);
+        Serial.print(" ");
+    }
+    Serial.println();
+};
+
+auto printDigitalSensors = [&]() {
+    for (int i = 0; i < NUM_BUMP_SENSORS; i++) {
+        Serial.print("b");
+        Serial.print(i);
+        Serial.print(":");
+        Serial.print(line_sensors.digital_readings[i]);
+        Serial.print(" ");
+    }
+    Serial.println();
+};
+
 float avgSensors() {
     float sum = 0;
     for (int i = 0; i < NUM_SENSORS; i++) {

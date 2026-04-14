@@ -1,14 +1,17 @@
 #ifndef _LINESENSORS_H
 #define _LINESENSORS_H
 #define NUM_SENSORS 3
+#define NUM_BUMP_SENSORS 2
 #define EMIT_PIN 11 // infra-red LEDs PIN
 #define BLACK_THRESHOLD 0.9
 
 const int sensor_pins[ NUM_SENSORS ] = { A2, A3, A4 };
+const int digital_pins[ NUM_BUMP_SENSORS ] = { 4, 5 };
 
 class LineSensors_c {
   
   public:
+    int digital_readings[ NUM_BUMP_SENSORS ];
     float readings[ NUM_SENSORS ];
     float minimum[ NUM_SENSORS ];
     float maximum[ NUM_SENSORS ];
@@ -85,6 +88,18 @@ class LineSensors_c {
     bool isOnBlack(int sensor_index) {
         if (sensor_index < 0 || sensor_index >= NUM_SENSORS) return false;
         return calibrated[sensor_index] >= BLACK_THRESHOLD;
+    }
+
+    void initialiseForDigital() {
+        for (int sensor = 0; sensor < NUM_BUMP_SENSORS; sensor++) {
+            pinMode(bump_sensor_pins[sensor], INPUT_PULLUP);
+        }
+    }
+
+    void readSensorsDigital() {
+        for (int sensor = 0; sensor < NUM_BUMP_SENSORS; sensor++) {
+            digital_readings[sensor] = digitalRead(digital_pins[sensor]);
+        }
     }
 };
 

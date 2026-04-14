@@ -41,25 +41,6 @@ void calibrateSensors() {
   line_sensors.calibrationFinish();
 }
 
-auto printSensors = [&]() {
-    for (int i = 1; i < 4; i++) {
-        Serial.print("s");
-        Serial.print(i);
-        Serial.print(":");
-        Serial.print(line_sensors.calibrated[i]);
-        Serial.print(" ");
-    }
-    Serial.println();
-};
-
-float avgSensors() {
-    float sum = 0;
-    for (int i = 1; i < 4; i++) {
-        sum += line_sensors.calibrated[i];
-    }
-    return sum / 5.0f;
-}
-
 void setup() {
   Serial.begin(9600);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -72,7 +53,7 @@ void setup() {
 }
 
 void loop() {
-  for (uint8_t i = 0; i < 100; i++) {
+  for (uint8_t i = 0; i < 20; i++) {
     sendByte(i);
     line_sensors.irOff();
     delay(500);  // 2 idle periods between frames

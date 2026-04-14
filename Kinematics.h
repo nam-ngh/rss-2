@@ -1,11 +1,3 @@
-/***************************************
- ,        .       .           .     ,--, 
- |        |       |           |       /  
- |    ,-: |-. ,-. |-. ,-. ,-. |-     `.  
- |    | | | | `-. | | |-' |-' |        ) 
- `--' `-` `-' `-' ' ' `-' `-' `-'   `-'  
-***************************************/
-
 // this #ifndef stops this file
 // from being included mored than
 // once by the compiler. 
@@ -116,7 +108,5 @@ class Kinematics_c {
     } // End of update()
 
 }; // End of Kinematics_c class defintion
-
-
 
 #endif

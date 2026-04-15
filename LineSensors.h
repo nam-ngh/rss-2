@@ -92,7 +92,7 @@ class LineSensors_c {
 
     void initialiseForDigital() {
         for (int sensor = 0; sensor < NUM_BUMP_SENSORS; sensor++) {
-            pinMode(bump_sensor_pins[sensor], INPUT_PULLUP);
+            pinMode(digital_pins[sensor], INPUT_PULLUP);
         }
     }
 

@@ -7,6 +7,12 @@ LineSensors_c line_sensors;
 #define BUZZER_PIN 6
 #define BIT_PERIOD_US 5000 // 1ms per bit = 1kbps
 #define THRESHOLD -1.5
+#define MSG_LEN 20
+#define TRIALS 10
+
+int curr_idx = 0;
+int curr_trial = 1;
+int correct = 0;
 
 void shortBeep(int duration) {
   analogWrite(BUZZER_PIN, 120);
@@ -102,13 +108,20 @@ void setup() {
 }
 
 void loop() {
+    if (curr_trial > TRIALS) {
+        Serial.print("Trials completed. Accuracy: ");
+        Serial.print((float)correct / (MSG_LEN * TRIALS) * 100.0);
+        Serial.println("%");
+        while (true);
+    }
+
     line_sensors.calcCalibratedADC();
 
     // if start bit detected enter loop
     if (avgSensors() < THRESHOLD) {
         unsigned long startTime = micros();  // anchor point
-        Serial.println("Start bit detected");
-        printSensors();
+        Serial.println("Start of message " + String(curr_idx));
+        // printSensors();
       
       
         uint8_t received = 0;
@@ -117,7 +130,7 @@ void loop() {
             while (micros() < targetTime);  // busy-wait to exact sample point
             
             line_sensors.calcCalibratedADC();
-            printSensors();
+            // printSensors();
             if (avgSensors() < THRESHOLD) {
                 received |= (1 << i);
             }
@@ -127,10 +140,28 @@ void loop() {
         unsigned long stopTarget = startTime + (unsigned long)(9.5f * BIT_PERIOD_US);
         while (micros() < stopTarget);
         line_sensors.calcCalibratedADC();
-        printSensors();
+        // printSensors();
     
         if (avgSensors() >= THRESHOLD) {
+            if (received == curr_idx) {
+                correct++;
+            }
+            Serial.print("Trial: ");
+            Serial.print(curr_trial);
+            Serial.print(" : Values: ");
+            Serial.print(curr_idx);
+            Serial.print("--");
             Serial.println(received);
+            
+            curr_idx++;
+
+            if (curr_idx >= MSG_LEN) {
+                Serial.print("Trial ");
+                Serial.print(curr_trial);
+                Serial.println(" completed.");
+                curr_idx = 0;
+                curr_trial++;
+            }
         }
     }
 }

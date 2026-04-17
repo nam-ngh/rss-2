@@ -61,8 +61,7 @@ class LCD_c: public PololuHD44780 {
         }
       } 
       return true;
-    } 
-    return true;
+    }
 
 private:
   unsigned long end_ts;

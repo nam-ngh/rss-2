@@ -136,32 +136,24 @@ void loop() {
             }
         }
     
-        // Stop bit sample
-        unsigned long stopTarget = startTime + (unsigned long)(9.5f * BIT_PERIOD_US);
-        while (micros() < stopTarget);
-        line_sensors.calcCalibratedADC();
-        // printSensors();
-    
-        if (avgSensors() >= THRESHOLD) {
-            if (received == curr_idx) {
-                correct++;
-            }
-            Serial.print("Trial: ");
-            Serial.print(curr_trial);
-            Serial.print(" : Values: ");
-            Serial.print(curr_idx);
-            Serial.print("--");
-            Serial.println(received);
-            
-            curr_idx++;
+        if (received == curr_idx) {
+            correct++;
+        }
+        Serial.print("Trial: ");
+        Serial.print(curr_trial);
+        Serial.print(" : Values: ");
+        Serial.print(curr_idx);
+        Serial.print("--");
+        Serial.println(received);
+        
+        curr_idx++;
 
-            if (curr_idx >= MSG_LEN) {
-                Serial.print("Trial ");
-                Serial.print(curr_trial);
-                Serial.println(" completed.");
-                curr_idx = 0;
-                curr_trial++;
-            }
+        if (curr_idx >= MSG_LEN) {
+            Serial.print("Trial ");
+            Serial.print(curr_trial);
+            Serial.println(" completed.");
+            curr_idx = 0;
+            curr_trial++;
         }
     }
 }

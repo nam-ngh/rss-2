@@ -57,5 +57,6 @@ void loop() {
     sendByte(i);
     line_sensors.irOff();
     delay(500);  // 2 idle periods between frames
-}
+  }
+  delay(2000);
 }

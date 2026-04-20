@@ -7,6 +7,7 @@ LineSensors_c line_sensors;
 #define BUZZER_PIN 6
 #define BIT_PERIOD_US 5000 // 1ms per bit = 1kbps
 #define THRESHOLD -1.5
+#define FRAME_INTERVAL_MS 550
 
 void shortBeep(int duration) {
   analogWrite(BUZZER_PIN, 120);
@@ -53,10 +54,11 @@ void setup() {
 }
 
 void loop() {
-  for (uint8_t i = 0; i < 20; i++) {
-    sendByte(i);
-    line_sensors.irOff();
-    delay(500);  // 2 idle periods between frames
-  }
-  delay(2000);
+    unsigned long trialStart = millis();
+    for (uint8_t i = 0; i < 20; i++) {
+        unsigned long frameStart = trialStart + (unsigned long)i * FRAME_INTERVAL_MS;
+        while (millis() < frameStart);  // wait until exact scheduled time to send
+        sendByte(i);
+    }
+    delay(2000);
 }

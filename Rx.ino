@@ -5,14 +5,18 @@ LCD_c display(0,1,14,17,13,30);
 LineSensors_c line_sensors;
 
 #define BUZZER_PIN 6
-#define BIT_PERIOD_US 5000 // 1ms per bit = 1kbps
+#define BIT_PERIOD_US 5000 // microseconds, should be divisible by 100 for frame (ms) timing conversion
 #define THRESHOLD -1.5
 #define MSG_LEN 20
-#define TRIALS 10
+#define TRIALS 3
+#define FRAME_INTERVAL_MS 550
 
-int curr_idx = 0;
+int received_idx = 0;
 int curr_trial = 1;
 int correct = 0;
+int total_bit_errors = 0;
+unsigned long trialStartTime = 0;
+bool trialActive = false;
 
 void shortBeep(int duration) {
   analogWrite(BUZZER_PIN, 120);
@@ -109,9 +113,6 @@ void setup() {
 
 void loop() {
     if (curr_trial > TRIALS) {
-        Serial.print("Trials completed. Accuracy: ");
-        Serial.print((float)correct / (MSG_LEN * TRIALS) * 100.0);
-        Serial.println("%");
         while (true);
     }
 
@@ -120,7 +121,11 @@ void loop() {
     // if start bit detected enter loop
     if (avgSensors() < THRESHOLD) {
         unsigned long startTime = micros();  // anchor point
-        Serial.println("Start of message " + String(curr_idx));
+        if (received_idx == 0) {
+            trialStartTime = millis();
+            trialActive = true;
+        }
+        uint8_t expected_idx = (millis() - trialStartTime) / FRAME_INTERVAL_MS;
         // printSensors();
       
       
@@ -135,25 +140,52 @@ void loop() {
                 received |= (1 << i);
             }
         }
-    
-        if (received == curr_idx) {
-            correct++;
-        }
-        Serial.print("Trial: ");
-        Serial.print(curr_trial);
-        Serial.print(" : Values: ");
-        Serial.print(curr_idx);
-        Serial.print("--");
-        Serial.println(received);
+        // // Wait until full frame to start processing result
+        // unsigned long lockoutEnd = startTime + (unsigned long)(BIT_PERIOD_US * 10);
+        // while (micros() < lockoutEnd);
         
-        curr_idx++;
+        // received value validation, print will take time in millis, 
+        // requires Tx to have delay between frames to avoid overlap
+        // minimum delay of 200ms would be safe
+        uint8_t diff = received ^ expected_idx;
+        uint8_t bit_err_count = __builtin_popcount(diff);
+        Serial.print("Values: ");
+        Serial.print(expected_idx);
+        Serial.print("--");
 
-        if (curr_idx >= MSG_LEN) {
-            Serial.print("Trial ");
-            Serial.print(curr_trial);
-            Serial.println(" completed.");
-            curr_idx = 0;
-            curr_trial++;
+        if (received == expected_idx) {
+            correct++;
+            Serial.println(received);
+        } else {
+            Serial.print(received);
+            Serial.print(". Bits dropped: ");
+            Serial.println(bit_err_count);
         }
+        
+        received_idx++;
+        total_bit_errors += bit_err_count;
+    }
+    uint8_t expected_idx = (millis() - trialStartTime) / FRAME_INTERVAL_MS;
+    if (trialActive && expected_idx >= MSG_LEN) {
+        Serial.print("Trial ");
+        Serial.print(curr_trial);
+        Serial.print(" completed. Correct: ");
+        Serial.print((int)correct);
+        Serial.print(". Faults: ");
+        Serial.print((int)(received_idx - correct));
+        Serial.print(". BER: ");
+        Serial.print((float)(total_bit_errors) / ((received_idx) * 8) * 100.0);
+        Serial.print("%. PER: ");
+        Serial.print((float)(received_idx - correct) / (received_idx) * 100.0);
+        Serial.print("%. Accuracy: ");
+        Serial.print((float)correct / (received_idx) * 100.0);
+        Serial.print("%. Missed frames: ");
+        Serial.println((int)(expected_idx - received_idx));
+
+        received_idx = 0;
+        correct = 0;
+        total_bit_errors = 0;
+        curr_trial++;
+        trialActive = false;
     }
 }

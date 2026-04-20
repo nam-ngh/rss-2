@@ -152,12 +152,24 @@ void loop() {
         Serial.print("Trial ");
         Serial.print(curr_trial);
         Serial.println(". Received: ");
+        uint8_t total_bit_errors = 0;
         for (int i = 0; i < MAX_SIZE; i++) {
             Serial.print(results[i]);
             Serial.print(" ");
+            total_bit_errors += __builtin_popcount(results[i] ^ i);
         }
         Serial.println();
+        if (arrayIdx == MAX_SIZE) {
+            Serial.print("Indexes matched, total bit errors: ");
+            Serial.println(total_bit_errors);
+        }
+        else {
+            Serial.print("Received ");
+            Serial.print(arrayIdx);
+            Serial.println(" out of 20 messages.");
+        }
         arrayIdx = 0;
+        memset(results, 0, sizeof(results));
         trialActive = false;
         curr_trial++;
     }

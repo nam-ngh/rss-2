@@ -7,16 +7,17 @@ LineSensors_c line_sensors;
 #define BUZZER_PIN 6
 #define BIT_PERIOD_US 5000 // microseconds, should be divisible by 100 for frame (ms) timing conversion
 #define THRESHOLD -1.5
-#define MSG_LEN 20
-#define TRIALS 3
-#define FRAME_INTERVAL_MS 550
+#define TRIALS 10
+#define TRIAL_TIME_MS (550 * 20)
+#define MAX_SIZE 20
 
-int received_idx = 0;
-int curr_trial = 1;
-int correct = 0;
-int total_bit_errors = 0;
-unsigned long trialStartTime = 0;
+bool decoding = false;
 bool trialActive = false;
+unsigned long trialStartTime = 0;
+uint8_t curr_trial = 0;
+uint8_t results[MAX_SIZE];
+int arrayIdx = 0;
+
 
 void shortBeep(int duration) {
   analogWrite(BUZZER_PIN, 120);
@@ -118,74 +119,46 @@ void loop() {
 
     line_sensors.calcCalibratedADC();
 
-    // if start bit detected enter loop
-    if (avgSensors() < THRESHOLD) {
-        unsigned long startTime = micros();  // anchor point
-        if (received_idx == 0) {
-            trialStartTime = millis();
+    // if start bit detected enter decoding loop
+    if (avgSensors() < THRESHOLD && !decoding) {
+        if (!trialActive) {
             trialActive = true;
+            trialStartTime = millis();
         }
-        uint8_t expected_idx = (millis() - trialStartTime) / FRAME_INTERVAL_MS;
-        // printSensors();
-      
-      
+        decoding = true;
+        unsigned long startTime = micros();
+        
+        // main byte decoding loop
         uint8_t received = 0;
         for (int i = 0; i < 8; i++) {
             unsigned long targetTime = startTime + (unsigned long)(BIT_PERIOD_US * i) + (BIT_PERIOD_US * 3/2);
             while (micros() < targetTime);  // busy-wait to exact sample point
             
             line_sensors.calcCalibratedADC();
-            // printSensors();
             if (avgSensors() < THRESHOLD) {
                 received |= (1 << i);
             }
         }
-        // // Wait until full frame to start processing result
-        // unsigned long lockoutEnd = startTime + (unsigned long)(BIT_PERIOD_US * 10);
-        // while (micros() < lockoutEnd);
-        
-        // received value validation, print will take time in millis, 
-        // requires Tx to have delay between frames to avoid overlap
-        // minimum delay of 200ms would be safe
-        uint8_t diff = received ^ expected_idx;
-        uint8_t bit_err_count = __builtin_popcount(diff);
-        Serial.print("Values: ");
-        Serial.print(expected_idx);
-        Serial.print("--");
-
-        if (received == expected_idx) {
-            correct++;
+        // lockout to prevent unexpected triggers mid-frame
+        unsigned long lockoutEnd = startTime + (unsigned long)(BIT_PERIOD_US * 10) - 500;
+        while (micros() < lockoutEnd);
+        decoding = false;
+        if (arrayIdx < MAX_SIZE) {
+            results[arrayIdx++] = received;
             Serial.println(received);
-        } else {
-            Serial.print(received);
-            Serial.print(". Bits dropped: ");
-            Serial.println(bit_err_count);
         }
-        
-        received_idx++;
-        total_bit_errors += bit_err_count;
     }
-    uint8_t expected_idx = (millis() - trialStartTime) / FRAME_INTERVAL_MS;
-    if (trialActive && expected_idx >= MSG_LEN) {
+    if (arrayIdx >= MAX_SIZE || (trialActive && millis() - trialStartTime > TRIAL_TIME_MS)) {
         Serial.print("Trial ");
         Serial.print(curr_trial);
-        Serial.print(" completed. Correct: ");
-        Serial.print((int)correct);
-        Serial.print(". Faults: ");
-        Serial.print((int)(received_idx - correct));
-        Serial.print(". BER: ");
-        Serial.print((float)(total_bit_errors) / ((received_idx) * 8) * 100.0);
-        Serial.print("%. PER: ");
-        Serial.print((float)(received_idx - correct) / (received_idx) * 100.0);
-        Serial.print("%. Accuracy: ");
-        Serial.print((float)correct / (received_idx) * 100.0);
-        Serial.print("%. Missed frames: ");
-        Serial.println((int)(expected_idx - received_idx));
-
-        received_idx = 0;
-        correct = 0;
-        total_bit_errors = 0;
-        curr_trial++;
+        Serial.println(". Received: ");
+        for (int i = 0; i < MAX_SIZE; i++) {
+            Serial.print(results[i]);
+            Serial.print(" ");
+        }
+        Serial.println();
+        arrayIdx = 0;
         trialActive = false;
+        curr_trial++;
     }
 }

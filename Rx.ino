@@ -25,23 +25,6 @@ void shortBeep(int duration) {
   analogWrite(BUZZER_PIN, 0);
 }
 
-void sendByte(uint8_t value) {
-    // Start bit (HIGH)
-    line_sensors.irOn();
-    delayMicroseconds(BIT_PERIOD_US);
-
-    // 8 data bits, LSB first
-    for (int i = 0; i < 8; i++) {
-        if (value & (1 << i)) line_sensors.irOn();
-        else line_sensors.irOff();
-        delayMicroseconds(BIT_PERIOD_US);
-    }
-
-    // Stop bit (LOW = idle)
-    line_sensors.irOff();
-    delayMicroseconds(BIT_PERIOD_US);
-}
-
 void calibrateSensors() {
   line_sensors.calibrationSetup();
   unsigned long start = millis();
@@ -131,7 +114,7 @@ void loop() {
         // main byte decoding loop
         uint8_t received = 0;
         for (int i = 0; i < 8; i++) {
-            unsigned long targetTime = startTime + (unsigned long)(BIT_PERIOD_US * i) + (BIT_PERIOD_US * 3/2);
+            unsigned long targetTime = startTime + ((unsigned long)BIT_PERIOD_US * i) + ((unsigned long)BIT_PERIOD_US * 3 / 2);
             while (micros() < targetTime);  // busy-wait to exact sample point
             
             line_sensors.calcCalibratedADC();
@@ -140,7 +123,7 @@ void loop() {
             }
         }
         // lockout to prevent unexpected triggers mid-frame
-        unsigned long lockoutEnd = startTime + (unsigned long)(BIT_PERIOD_US * 10) - 500;
+        unsigned long lockoutEnd = startTime + ((unsigned long)BIT_PERIOD_US * 10) - 500;
         while (micros() < lockoutEnd);
         decoding = false;
         if (arrayIdx < MAX_SIZE) {
